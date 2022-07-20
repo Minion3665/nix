@@ -767,7 +767,7 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
             throw UsageError("'--file' and '--expr' are exclusive");
 
         // FIXME: backward compatibility hack
-        if (file) evalSettings.pureEval = false;
+        evalSettings.pureEval = false;
 
         auto state = getEvalState();
         auto vFile = state->allocValue();
