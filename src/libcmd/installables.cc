@@ -778,8 +778,11 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
         } else if (file)
             state->evalFile(lookupFileArg(*state, *file), *vFile);
         else {
-            auto e = state->parseExprFromString(*expr, absPath("."));
-            state->eval(e, *vFile);
+            Strings e = {};
+            e.push_back("with (builtins.getFlake \"nixpkgs\")");
+            e.push_back(*expr);
+            auto parsed = state->parseExprFromString(concatStringsSep(";", e), absPath("."));
+            state->eval(parsed, *vFile);
         }
 
         for (auto & s : ss) {
