@@ -789,10 +789,54 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
             state->evalFile(lookupFileArg(*state, *file), *vFile);
         else {
             Strings e = {};
-            e.push_back("with (builtins.getFlake \"nixpkgs\")");
+
+            for (auto & s : ss) {
+                std::exception_ptr ex;
+
+                if (s.find('/') != std::string::npos) {
+                    try {
+                        result.push_back(std::make_shared<InstallableStorePath>(store, store->followLinksToStorePath(s)));
+                        continue;
+                    } catch (BadStorePath &) {
+                    } catch (...) {
+                        if (!ex)
+                            ex = std::current_exception();
+                    }
+                }
+
+                try {
+                    auto [flakeRef, fragment, outputsSpec] = parseFlakeRefWithFragmentAndOutputsSpec(s, absPath("."));
+/*                    result.push_back(std::make_shared<InstallableFlake>(
+                            this,
+                            getEvalState(),
+                            std::move(flakeRef),
+                            fragment,
+                            outputsSpec,
+                            getDefaultFlakeAttrPaths(),
+                            getDefaultFlakeAttrPathPrefixes(),
+                            lockFlags));*/
+                    e.push_back("with (builtins.getFlake \"" + flakeRef.to_string() + "\")" + (fragment != "" ? "." + fragment : ""));
+                    e.push_back("with (builtins.getFlake \"" + flakeRef.to_string() + "\").packages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
+                    e.push_back("with (builtins.getFlake \"" + flakeRef.to_string() + "\").legacyPackages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
+                    continue;
+                } catch (...) {
+                    ex = std::current_exception();
+                }
+
+                std::rethrow_exception(ex);
+            }
+
             e.push_back(*expr);
             auto parsed = state->parseExprFromString(concatStringsSep(";", e), absPath("."));
             state->eval(parsed, *vFile);
+
+            auto [prefix, outputsSpec] = parseOutputsSpec(".");
+            result.push_back(
+                std::make_shared<InstallableAttrPath>(
+                    state, *this, vFile,
+                    prefix == "." ? "" : prefix,
+                    outputsSpec));
+            return result;
         }
 
         for (auto & s : ss) {
