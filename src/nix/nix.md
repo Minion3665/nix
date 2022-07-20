@@ -139,8 +139,13 @@ the Nix store. Here are the recognised types of installables:
 * **Nix expressions**: `--expr '(import <nixpkgs> {}).hello.overrideDerivation (prev: { name = "my-hello"; })'`.
 
   When the `--expr` option is given, all installables are interpreted
-  as Nix expressions. You may need to specify `--impure` if the
-  expression references impure inputs (such as `<nixpkgs>`).
+  as context for the expression. For example, the following is valid:
+
+  ```console
+  # nix shell nixpkgs#python3 --expr 'withPackages(pyPkgs: with pyPkgs; [ numpy ])'
+  ```
+
+  Using `--expr` implies `--impure`.
 
 For most commands, if no installable is specified, the default is `.`,
 i.e. Nix will operate on the default flake output attribute of the
