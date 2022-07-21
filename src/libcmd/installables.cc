@@ -830,13 +830,15 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
             auto parsed = state->parseExprFromString(concatStringsSep(";", e), absPath("."));
             state->eval(parsed, *vFile);
 
-            auto [prefix, outputsSpec] = parseOutputsSpec(".");
-            result.push_back(
-                std::make_shared<InstallableAttrPath>(
-                    state, *this, vFile,
-                    prefix == "." ? "" : prefix,
-                    outputsSpec));
-            return result;
+            if (!ss.empty()) {
+                auto [prefix, outputsSpec] = parseOutputsSpec(".");
+                result.push_back(
+                    std::make_shared<InstallableAttrPath>(
+                        state, *this, vFile,
+                        prefix == "." ? "" : prefix,
+                        outputsSpec));
+                return result;
+            }
         }
 
         for (auto & s : ss) {
