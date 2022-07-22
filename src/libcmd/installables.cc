@@ -754,7 +754,7 @@ FlakeRef InstallableFlake::nixpkgsFlakeRef() const
 }
 
 std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
-    ref<Store> store, std::vector<std::string> ss)
+    ref<Store> store, std::vector<std::string> ss, std::optional<std::vector<std::string>> explicitInstallables = std::nullopt)
 {
     std::vector<std::shared_ptr<Installable>> result;
 
@@ -780,7 +780,7 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
         else {
             Strings e = {};
 
-            for (auto & s : ss) {
+            for (auto & s : explicitInstallables.value_or(ss)) {
                 std::exception_ptr ex;
 
                 if (s.find('/') != std::string::npos) {
@@ -827,8 +827,8 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
                         state, *this, vFile,
                         prefix == "." ? "" : prefix,
                         outputsSpec));
-                return result;
             }
+            return result;
         }
 
         for (auto & s : ss) {
@@ -1094,11 +1094,12 @@ void InstallablesCommand::prepare()
 
 Installables InstallablesCommand::load() {
     Installables installables;
+    auto explicitInstallables = _installables;
     if (_installables.empty() && useDefaultInstallables())
         // FIXME: commands like "nix profile install" should not have a
         // default, probably.
         _installables.push_back(".");
-    return parseInstallables(getStore(), _installables);
+    return parseInstallables(getStore(), _installables, explicitInstallables);
 }
 
 std::vector<std::string> InstallablesCommand::getFlakesForCompletion()

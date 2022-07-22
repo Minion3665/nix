@@ -102,7 +102,7 @@ struct SourceExprCommand : virtual Args, MixFlakeOptions
     SourceExprCommand(bool supportReadOnlyMode = false);
 
     std::vector<std::shared_ptr<Installable>> parseInstallables(
-        ref<Store> store, std::vector<std::string> ss);
+        ref<Store> store, std::vector<std::string> ss, std::optional<std::vector<std::string>> explicitInstallables);
 
     std::shared_ptr<Installable> parseInstallable(
         ref<Store> store, const std::string & installable);
