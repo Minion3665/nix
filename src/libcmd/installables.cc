@@ -776,7 +776,7 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
             throw UsageError("'--file' and '--expr' are exclusive");
 
         // FIXME: backward compatibility hack
-        evalSettings.pureEval = false;
+        if (file) evalSettings.pureEval = false;
 
         auto state = getEvalState();
         auto vFile = state->allocValue();
@@ -790,7 +790,7 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
         else {
             Strings e = {};
 
-            for (auto & s : explicitInstallables.value_or(ss)) {
+            for (auto & s : explicitInstallables.value_or(std::vector<std::string>())) {
                 std::exception_ptr ex;
 
                 if (s.find('/') != std::string::npos) {
@@ -806,7 +806,7 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
 
                 try {
                     auto [flakeRef, fragment, outputsSpec] = parseFlakeRefWithFragmentAndOutputsSpec(s, absPath("."));
-/*                    result.push_back(std::make_shared<InstallableFlake>(
+                    auto installableFlake = InstallableFlake(
                             this,
                             getEvalState(),
                             std::move(flakeRef),
@@ -814,10 +814,11 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
                             outputsSpec,
                             getDefaultFlakeAttrPaths(),
                             getDefaultFlakeAttrPathPrefixes(),
-                            lockFlags));*/
-                    e.push_back("with (builtins.getFlake \"" + flakeRef.to_string() + "\")" + (fragment != "" ? "." + fragment : ""));
-                    e.push_back("with (builtins.getFlake \"" + flakeRef.to_string() + "\").packages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
-                    e.push_back("with (builtins.getFlake \"" + flakeRef.to_string() + "\").legacyPackages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
+                            lockFlags);
+                    auto lockedFlake = installableFlake.getLockedFlake()->flake.lockedRef;
+                    e.push_back("with (builtins.getFlake \"" + lockedFlake.to_string() + "\")" + (fragment != "" ? "." + fragment : ""));
+                    e.push_back("with (builtins.getFlake \"" + lockedFlake.to_string() + "\").packages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
+                    e.push_back("with (builtins.getFlake \"" + lockedFlake.to_string() + "\").legacyPackages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
                     continue;
                 } catch (...) {
                     ex = std::current_exception();

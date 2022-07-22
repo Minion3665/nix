@@ -144,8 +144,6 @@ the Nix store. Here are the recognised types of installables:
   # nix shell nixpkgs#python3 --expr 'withPackages(pyPkgs: with pyPkgs; [ numpy ])'
   ```
 
-  Using `--expr` implies `--impure`.
-
 For most commands, if no installable is specified, the default is `.`,
 i.e. Nix will operate on the default flake output attribute of the
 flake in the current directory.
