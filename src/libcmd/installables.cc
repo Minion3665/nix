@@ -806,9 +806,18 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
                             getDefaultFlakeAttrPathPrefixes(),
                             lockFlags);
                     auto lockedFlake = installableFlake.getLockedFlake()->flake.lockedRef;
-                    e.push_back("with (builtins.getFlake \"" + lockedFlake.to_string() + "\")" + (fragment != "" ? "." + fragment : ""));
-                    e.push_back("with (builtins.getFlake \"" + lockedFlake.to_string() + "\").packages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
-                    e.push_back("with (builtins.getFlake \"" + lockedFlake.to_string() + "\").legacyPackages.\"${builtins.currentSystem}\"" + (fragment != "" ? "." + fragment : ""));
+
+                    auto defaultPathPrefixes = getDefaultFlakeAttrPathPrefixes();
+                    defaultPathPrefixes.push_back("");
+
+                    for (auto & path : defaultPathPrefixes) {
+                        if (path.length()) {
+                            path.pop_back();
+                            path = "." + path;
+                        }
+
+                        e.push_back(str(boost::format("with (builtins.getFlake \"%1%\")%2%%3%") % lockedFlake.to_string() % path % (fragment != "" ? "." + fragment : "")));
+                    }
                     continue;
                 } catch (...) {
                     ex = std::current_exception();
