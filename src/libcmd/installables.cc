@@ -826,7 +826,7 @@ std::vector<std::shared_ptr<Installable>> SourceExprCommand::parseInstallables(
                             path = "." + path;
                         }
 
-                        e.push_back(str(boost::format("with (builtins.getFlake \"%1%\")%2%%3% or {}") % lockedFlake.to_string() % path % (fragment != "" ? "." + fragment : "")));
+                        e.push_back(str(boost::format("with (builtins.getFlake \"%1%\").outputs%2%%3% or {}") % lockedFlake.to_string() % path % (fragment != "" ? "." + fragment : "")));
                     }
                     continue;
                 } catch (...) {
